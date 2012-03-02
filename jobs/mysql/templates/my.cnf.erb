@@ -20,10 +20,6 @@ tmpdir		= /tmp
 language	= /var/vcap/packages/mysql/share/mysql/english
 skip-external-locking
 fast_index_creation = false
-server-id   = <%= spec.index + 1 %>
-<% if spec.index == 0 %>
-log-bin = mysql-bin
-<% end %>
 
 key_buffer              = <%= properties.mysql.production ? '3276M' : '16M' %>
 innodb_buffer_pool_size = <%= properties.mysql.production ? '3276M' : '256M' %>

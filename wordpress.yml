@@ -4,7 +4,7 @@ director_uuid: 74cee69e-2cd8-4c99-96c8-f332e4967021
 
 release:
   name: wordpress
-  version: 12
+  version: 1
 
 compilation:
   workers: 4
@@ -73,12 +73,12 @@ jobs:
 
   - name: wordpress
     template: wordpress
-    instances: 2
+    instances: 4
     resource_pool: infrastructure
     networks:
     - name: default
       static_ips:
-      - 172.31.220.30 - 172.31.220.31
+      - 172.31.220.30 - 172.31.220.33
 
   - name: nginx
     template: nginx
@@ -101,6 +101,8 @@ properties:
     servers:
       - 172.31.220.30
       - 172.31.220.31
+      - 172.31.220.32
+      - 172.31.220.33
     servername: wp.appcloud14.dev.mozycloud.com
     db:
       name: wp
@@ -118,7 +120,7 @@ properties:
   mysql:
     address: 172.31.220.20
     port: 3306
-    password: rootpass
+    password: verysecretpasswordforroot
 
   nginx:
     workers: 1
