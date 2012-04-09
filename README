@@ -1,3 +1,4 @@
+#
 This is a sample release repository for BOSH that deploys a three tier LAMP application: a wordpress blog which consists of a number of apache servers running php & wordpress, fronted by nginx, and using one mysql database for storage.
 
 The sample is made up of three jobs:
