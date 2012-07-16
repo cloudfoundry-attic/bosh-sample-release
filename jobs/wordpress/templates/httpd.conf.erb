@@ -109,6 +109,11 @@ ServerName <%= properties.wordpress.servername %>
 # symbolic links and aliases may be used to point to other locations.
 #
 DocumentRoot "/var/vcap/packages/wordpress"
+Alias /wp-content /var/vcap/shared/wordpress/wp-content
+<Directory /var/vcap/shared/wordpress/wp-content>
+  Order allow,deny
+  Allow from all
+</Directory>
 
 #
 # Each directory to which Apache has access can be configured with respect

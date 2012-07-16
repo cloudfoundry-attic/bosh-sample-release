@@ -1,6 +1,6 @@
----
+--- 
 final_name: sample
-min_cli_version: 0.15.2
+min_cli_version: 0.19.4
 blobstore:
   provider: atmos
   options:
