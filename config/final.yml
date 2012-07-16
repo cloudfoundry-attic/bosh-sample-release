@@ -1,9 +1,9 @@
----
+--- 
 final_name: sample
-min_cli_version: 0.15.2
-blobstore:
+min_cli_version: 0.19.4
+blobstore: 
   provider: atmos
-  options:
+  options: 
     tag: BOSH
     url: https://blob.cfblob.com
     uid: 0559221ba3f64d73a60dced2912c9e6b/user1

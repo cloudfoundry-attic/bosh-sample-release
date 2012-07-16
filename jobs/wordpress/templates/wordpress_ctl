@@ -7,6 +7,7 @@ PIDFILE=$RUN_DIR/httpd.pid
 CONF_DIR=/var/vcap/jobs/$JOB/config
 APACHECTL=/var/vcap/packages/apache2/bin/apachectl
 APSTART=/var/vcap/sys/log/apache2/start.log
+NFS_SHARE=/var/vcap/shared
 
 case $1 in
 
@@ -25,6 +26,41 @@ case $1 in
       ln -s /var/vcap/jobs/wordpress/config/wp-config.php \
         /var/vcap/packages/wordpress/wp-config.php
     fi
+
+    if [ ! -d $NFS_SHARE/wordpress ]; then
+      mkdir -p $NFS_SHARE/wordpress
+      cp -a /var/vcap/packages/wordpress/wp-content $NFS_SHARE/wordpress
+      chown -R vcap:vcap $NFS_SHARE/wordpress
+    fi
+
+    <% if properties.nfs_server %>
+    modprobe nfs
+    mkdir -p $NFS_SHARE
+
+    cp -f /etc/default/nfs-common /etc/default/nfs-common.orig
+    cp -f $CONF_DIR/nfs-common /etc/default/nfs-common
+
+    cp -f $CONF_DIR/idmapd.conf /etc/idmapd.conf
+    /etc/init.d/idmapd restart
+
+    if grep -qs $NFS_SHARE /proc/mounts; then
+      echo "Found NFS mount"
+    else
+      echo "Mounting NFS..."
+      mount -o timeo=10,intr -t nfs4 <%= properties.nfs_server.address %>:<%= properties.nfs_server.share || "/" %> $NFS_SHARE
+      if [ $? != 0 ]; then
+        echo "Cannot mount NFS, exiting..."
+        exit 1
+      fi
+    fi
+
+    touch $NFS_SHARE/.nfs_test
+
+    if [ $? != 0 ]; then
+      echo "Failed to start: cannot write to NFS"
+      exit 1
+    fi
+    <% end %>
 
     $APACHECTL -f $CONF_DIR/httpd.conf -k start >> $APSTART 2>&1
     ;;

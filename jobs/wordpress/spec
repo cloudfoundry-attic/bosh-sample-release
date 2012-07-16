@@ -5,6 +5,8 @@ templates:
   httpd.conf.erb:     config/httpd.conf
   wp-config.php.erb:  config/wp-config.php
   php.ini.erb:        config/php.ini
+  idmapd.conf.erb:    config/idmapd.conf
+  nfs-common:         config/nfs-common
 packages:
   - mysqlclient
   - apache2
