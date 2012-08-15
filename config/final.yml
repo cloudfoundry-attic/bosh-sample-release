@@ -1,9 +1,7 @@
 --- 
-final_name: sample
+final_name: wordpress
 min_cli_version: 0.19.5
 blobstore: 
-  provider: atmos
+  provider: s3
   options: 
-    tag: BOSH
-    url: https://blob.cfblob.com
-    uid: 0559221ba3f64d73a60dced2912c9e6b/user1
+    bucket_name: bosh-sample-release

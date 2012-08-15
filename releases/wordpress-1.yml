@@ -1,0 +1,58 @@
+--- 
+packages: 
+- name: apache2
+  version: 1
+  sha1: 159dabe0be08e9566efd349201bce881a21e6dcf
+  dependencies: []
+
+- name: common
+  version: 1
+  sha1: 7bff148023b0b25f1d1dfa02bec9942176f31cea
+  dependencies: []
+
+- name: debian_nfs_server
+  version: 1
+  sha1: 2467d7ea8e8d9c93cd3c5e5eb98200efb3a7134f
+  dependencies: []
+
+- name: mysql
+  version: 1
+  sha1: 033153520e9a0a5c03918281dffbb0da37acf2c7
+  dependencies: []
+
+- name: mysqlclient
+  version: 1
+  sha1: 86167dc54f9d446c63fc1e7404d18ce0f371adf4
+  dependencies: []
+
+- name: nginx
+  version: 1
+  sha1: 0146d05574364aa5824ab7ee6a58e7da3c9af890
+  dependencies: []
+
+- name: php5
+  version: 1
+  sha1: a452cd9edcb2cd928dc4f16f9498aff0778fc942
+  dependencies: 
+  - apache2
+  - mysqlclient
+- name: wordpress
+  version: 1
+  sha1: 3d5110d4aa830dfb4a0650e7ba501f528f3df890
+  dependencies: []
+
+jobs: 
+- name: debian_nfs_server
+  version: 1
+  sha1: ef6654ab595038a3b48d1cea38cecc8faf029d7f
+- name: mysql
+  version: 1
+  sha1: d71ac8b93cc8af3d387ae6c70ace8708ad30c88b
+- name: nginx
+  version: 1
+  sha1: aabfd72aa739c387ed9a4ecb72157148232f3e14
+- name: wordpress
+  version: 1
+  sha1: e789c76cc31858f3efd2a584df14106d63e8e2f9
+name: wordpress
+version: 1
