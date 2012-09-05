@@ -1,0 +1,117 @@
+---
+name: wordpress
+director_uuid: 718f5344-c8e4-4266-ab10-3a75e1638e25
+
+release:
+  name: wordpress
+  version: latest
+
+compilation:
+  workers: 3 # only the required number are provisioned
+  network: default
+  reuse_compilation_vms: true
+  cloud_properties:
+    instance_type: m1.small
+
+# this section describes how updates are handled
+update:
+  canaries: 1
+  canary_watch_time: 3000-90000
+  update_watch_time: 3000-90000
+  max_in_flight: 4
+  max_errors: 1
+
+networks:
+  - name: elastic
+    type: vip
+    cloud_properties: {}
+  - name: default
+    type: dynamic
+    cloud_properties:
+      security_groups:
+      - open
+
+resource_pools:
+  - name: common
+    network: default
+    size: 4
+    stemcell:
+      name: bosh-stemcell
+      version: 0.6.4
+    cloud_properties:
+      instance_type: m1.small
+      availability_zone:
+      key_name:
+
+jobs:
+  - name: mysql
+    template: mysql
+    instances: 1
+    resource_pool: common
+    networks:
+      - name: default
+        default: [dns, gateway]
+      - name: elastic
+        static_ips:
+        - 107.21.118.59
+  - name: nfs
+    template: debian_nfs_server
+    instances: 1
+    resource_pool: common
+    networks:
+      - name: default
+        default: [dns, gateway]
+      - name: elastic
+        static_ips:
+        - 107.21.118.229
+  - name: wordpress
+    template: wordpress
+    instances: 1
+    resource_pool: common
+    networks:
+      - name: default
+        default: [dns, gateway]
+      - name: elastic
+        static_ips:
+        - 107.21.118.223
+  - name: nginx
+    template: nginx
+    instances: 1
+    resource_pool: common
+    networks:
+      - name: default
+        default: [dns, gateway]
+      - name: elastic
+        static_ips:
+        - 107.21.118.225
+
+properties:
+  nginx:
+    workers: 1
+  wordpress:
+    admin: foo@bar.com
+    port: 8008
+    servers:
+      - 107.21.118.223
+    servername: 107.21.118.225
+    db:
+      name: wp
+      user: wordpress
+      pass: w0rdpr3ss
+    auth_key: random key
+    secure_auth_key: random key
+    logged_in_key: random key
+    nonce_key: random key
+    auth_salt: random key
+    secure_auth_salt: random key
+    logged_in_salt: random key
+    nonce_salt: random key
+  mysql:
+    address: 107.21.118.59
+    port: 3306
+    password: rootpass
+  nfs_server:
+    address: 107.21.118.229
+    network: 107.21.118.223/255.255.255.255
+  debian_nfs_server:
+    no_root_squash: true
