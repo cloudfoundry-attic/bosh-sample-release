@@ -1,0 +1,90 @@
+---
+name: wordpress
+director_uuid: 5a25caec-2d56-46a6-984a-e66d0a100e3c # CHANGE: Director UUID
+
+release:
+  name: wordpress
+  version: latest
+
+compilation:
+  workers: 3
+  network: default
+  reuse_compilation_vms: true
+  cloud_properties:
+    instance_type: m1.microbosh
+
+update:
+  canaries: 1
+  canary_watch_time: 3000-120000
+  update_watch_time: 3000-120000
+  max_in_flight: 4
+  max_errors: 1
+
+networks:
+  - name: floating
+    type: vip
+    cloud_properties: {}
+  - name: default
+    type: dynamic
+    cloud_properties:
+      security_groups:
+        - default # CHANGE: Security Group (ports 22 & 80)
+
+resource_pools:
+  - name: common
+    network: default
+    size: 1
+    stemcell:
+      name: bosh-stemcell
+      version: latest
+    cloud_properties:
+      instance_type: m1.microbosh
+
+jobs:
+  - name: core
+    template:
+    - mysql
+    - debian_nfs_server
+    - wordpress
+    - nginx
+    instances: 1
+    resource_pool: common
+    networks:
+      - name: default
+        default: [dns, gateway]
+      - name: floating
+        static_ips:
+          - 216.55.141.199 # CHANGE: Floating IP 1
+
+properties:
+  env:
+
+  mysql:
+    address: 216.55.141.199 # CHANGE: Floating IP 1
+    password: rootpass
+
+  nfs_server:
+    address: 216.55.141.199 # CHANGE: Floating IP 2
+    network: "*.wordpress.microbosh"
+
+    idmapd_domain: novalocal
+
+  wordpress:
+    admin: foo@bar.com
+    servers:
+      - 216.55.141.199 # CHANGE: Floating IP 3
+    servername: 216.55.141.199 # CHANGE: Floating IP 4
+    db:
+      name: wp
+      user: wordpress
+      pass: w0rdpr3ss
+    auth_key: random key
+    secure_auth_key: random key
+    logged_in_key: random key
+    nonce_key: random key
+    auth_salt: random key
+    secure_auth_salt: random key
+    logged_in_salt: random key
+    nonce_salt: random key
+
+
