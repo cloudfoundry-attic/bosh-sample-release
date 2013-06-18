@@ -1,6 +1,6 @@
 ---
-name: wordpress
-director_uuid: 5960edfe-5cf4-4b70-95fa-728a52f12b56 # CHANGE: Director UUID
+name: wordpress-openstack
+director_uuid: <director_uuid> # CHANGE
 
 release:
   name: wordpress
@@ -11,7 +11,7 @@ compilation:
   network: default
   reuse_compilation_vms: true
   cloud_properties:
-    instance_type: m1.small
+    instance_type: <flavor_name> # CHANGE
 
 update:
   canaries: 1
@@ -28,16 +28,18 @@ networks:
     type: manual
     subnets:
       - name: private
-        range: 10.0.1.0/24
-        gateway: 10.0.1.1
+        range: <subnet_cidr> # CHANGE
+        gateway: <subnet_gateway> # CHANGE
         reserved:
-          - 10.0.1.2 - 10.0.1.9
+          - <first_reserved_ip_address> - <last_reserved_ip_address> # CHANGE
         static:
-          - 10.0.1.10 - 10.0.1.20
+          - <first_ip_address_for_vms> - <last_ip_address_for_vms> # CHANGE
         cloud_properties:
           security_groups:
-            - default # CHANGE: Security Group
-          net_id: 2438bca2-24fa-450f-ae7b-ec2e53b51984 # CHANGE: OpenStack Quantum network UUID
+            - default
+            - <microbosh_security_group> # CHANGE
+            - <wordpress_security_group> # CHANGE
+          net_id: <network_uuid> # CHANGE
 
 resource_pools:
   - name: common
@@ -47,7 +49,7 @@ resource_pools:
       name: bosh-stemcell
       version: latest
     cloud_properties:
-      instance_type: m1.small
+      instance_type: <flavor_name> # CHANGE
 
 jobs:
   - name: mysql
@@ -58,7 +60,7 @@ jobs:
       - name: default
         default: [dns, gateway]
         static_ips:
-          - 10.0.1.10 # CHANGE: Static IP 1
+          - <ip_address_for_mysql> # CHANGE
 
   - name: nfs
     template: debian_nfs_server
@@ -68,7 +70,7 @@ jobs:
       - name: default
         default: [dns, gateway]
         static_ips:
-          - 10.0.1.11 # CHANGE: Static IP 2
+          - <ip_address_for_nfs> # CHANGE
 
   - name: wordpress
     template: wordpress
@@ -78,7 +80,7 @@ jobs:
       - name: default
         default: [dns, gateway]
         static_ips:
-          - 10.0.1.12 # CHANGE: Static IP 3
+          - <ip_address_for_wordpress> # CHANGE
 
   - name: nginx
     template: nginx
@@ -88,32 +90,29 @@ jobs:
       - name: default
         default: [dns, gateway]
         static_ips:
-          - 10.0.1.13 # CHANGE: Static IP 4
+          - <ip_address_for_nginx> # CHANGE
       - name: floating
         static_ips:
-          - 192.168.1.226 # CHANGE: Floating IP 1
+          - <allocated_floating_ip> # CHANGE
 
 properties:
-  env:
-
   mysql:
-    address: 10.0.1.10 # CHANGE: Static IP 1
-    password: rootpass
+    address: <ip_address_for_mysql> # CHANGE
+    password: c1oudc0w
 
   nfs_server:
-    address: 10.0.1.11 # CHANGE: Static IP 2
-    network: 10.0.1.12/255.255.255.255 # CHANGE: Static IP 3
-    idmapd_domain: novalocal
+    address: <ip_address_for_nfs> # CHANGE
+    network: <subnet_cidr> # CHANGE
 
   wordpress:
     admin: foo@bar.com
     servers:
-      - 10.0.1.12 # CHANGE: Static IP 3
-    servername: 192.168.1.226 # CHANGE: Floating IP 1
+      - <ip_address_for_wordpress> # CHANGE
+    servername: <allocated_floating_ip> # CHANGE
     db:
       name: wp
       user: wordpress
-      pass: w0rdpr3ss
+      pass: c1oudc0w
     auth_key: random key
     secure_auth_key: random key
     logged_in_key: random key

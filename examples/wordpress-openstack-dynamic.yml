@@ -1,6 +1,6 @@
 ---
-name: wordpress
-director_uuid: 5960edfe-5cf4-4b70-95fa-728a52f12b56 # CHANGE: Director UUID
+name: wordpress-openstack
+director_uuid: <director_uuid> # CHANGE
 
 release:
   name: wordpress
@@ -11,7 +11,7 @@ compilation:
   network: default
   reuse_compilation_vms: true
   cloud_properties:
-    instance_type: m1.small
+    instance_type: <flavor_name> # CHANGE
 
 update:
   canaries: 1
@@ -28,7 +28,9 @@ networks:
     type: dynamic
     cloud_properties:
       security_groups:
-        - default # CHANGE: Security Group
+        - default
+        - <microbosh_security_group> # CHANGE
+        - <wordpress_security_group> # CHANGE
 
 resource_pools:
   - name: common
@@ -38,7 +40,7 @@ resource_pools:
       name: bosh-stemcell
       version: latest
     cloud_properties:
-      instance_type: m1.small
+      instance_type: <flavor_name> # CHANGE
 
 jobs:
   - name: mysql
@@ -48,9 +50,6 @@ jobs:
     networks:
       - name: default
         default: [dns, gateway]
-      - name: floating
-        static_ips:
-          - 192.168.1.226 # CHANGE: Floating IP 1
 
   - name: nfs
     template: debian_nfs_server
@@ -59,9 +58,6 @@ jobs:
     networks:
       - name: default
         default: [dns, gateway]
-      - name: floating
-        static_ips:
-          - 192.168.1.227 # CHANGE: Floating IP 2
 
   - name: wordpress
     template: wordpress
@@ -70,9 +66,6 @@ jobs:
     networks:
       - name: default
         default: [dns, gateway]
-      - name: floating
-        static_ips:
-          - 192.168.1.228 # CHANGE: Floating IP 3
 
   - name: nginx
     template: nginx
@@ -83,29 +76,26 @@ jobs:
         default: [dns, gateway]
       - name: floating
         static_ips:
-          - 192.168.1.229 # CHANGE: Floating IP 4
+          - <allocated_floating_ip> # CHANGE
 
 properties:
-  env:
-
   mysql:
-    address: 192.168.1.226 # CHANGE: Floating IP 1
-    password: rootpass
+    address: 0.mysql.default.wordpress-openstack.microbosh
+    password: c1oudc0w
 
   nfs_server:
-    address: 192.168.1.227 # CHANGE: Floating IP 2
+    address: 0.nfs.default.wordpress-openstack.microbosh
     network: *.wordpress.microbosh
-    idmapd_domain: novalocal
 
   wordpress:
     admin: foo@bar.com
     servers:
-      - 192.168.1.228 # CHANGE: Floating IP 3
-    servername: 192.168.1.229 # CHANGE: Floating IP 4
+      - 0.wordpress.default.wordpress-openstack.microbosh
+    servername: <allocated_floating_ip> # CHANGE
     db:
       name: wp
       user: wordpress
-      pass: w0rdpr3ss
+      pass: c1oudc0w
     auth_key: random key
     secure_auth_key: random key
     logged_in_key: random key
