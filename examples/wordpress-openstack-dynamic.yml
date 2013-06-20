@@ -85,7 +85,7 @@ properties:
 
   nfs_server:
     address: 0.nfs.default.wordpress-openstack.microbosh
-    network: *.wordpress.microbosh
+    network: "*.wordpress-openstack.microbosh"
 
   wordpress:
     admin: foo@bar.com
