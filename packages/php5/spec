@@ -4,4 +4,4 @@ dependencies:
   - apache2
   - mysqlclient
 files:
-  - php5/php-5.3.10.tar.gz
+  - php5/php-5.3.27.tar.bz2

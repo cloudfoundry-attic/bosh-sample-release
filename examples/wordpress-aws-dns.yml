@@ -45,6 +45,7 @@ jobs:
     template: mysql
     instances: 1
     resource_pool: common
+    persistent_disk: 10240
     networks:
       - name: default
         default: [dns, gateway]
@@ -53,6 +54,7 @@ jobs:
     template: debian_nfs_server
     instances: 1
     resource_pool: common
+    persistent_disk: 10240
     networks:
       - name: default
         default: [dns, gateway]

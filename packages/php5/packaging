@@ -2,12 +2,12 @@
 set -e
 
 echo "Extracting php5..."
-tar xzf php5/php-5.3.10.tar.gz
+tar xjf php5/php-5.3.27.tar.bz2
 
 export APACHE2=/var/vcap/packages/apache2
 
 echo "Building php5..."
-cd php-5.3.10
+cd php-5.3.27
   ./configure \
   --prefix=${BOSH_INSTALL_TARGET} \
   --with-apxs2=${APACHE2}/bin/apxs \
