@@ -2,11 +2,11 @@
 set -e
 
 echo "Extracting apache https..."
-tar xzf apache2/httpd-2.2.21.tar.gz
+tar xzf apache2/httpd-2.2.25.tar.gz
 
 echo "Building apache https..."
 (
-  cd httpd-2.2.21
+  cd httpd-2.2.25
   ./configure \
     --prefix=${BOSH_INSTALL_TARGET} \
     --enable-so
