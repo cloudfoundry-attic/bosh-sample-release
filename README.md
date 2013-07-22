@@ -219,7 +219,7 @@ The spec file is a yaml document that defines
 
 The nginx job has a fairly straightforward spec:
 
-jobs/nginx/spec
+**jobs/nginx/spec**
 
     ---
     name: nginx
@@ -299,10 +299,10 @@ It generally easier to create templates on an existing BOSH instance that has th
 <table width="100%">
     <tr><th align="left" width="30%">object</th><th align="left" width="70%">path</th></tr>
     <tr><td>package contents</td><td>/var/vcap/package/{package name}</td></tr>
-    <tr><td>job configuration files</td><td>/var/vcap/jobs/{package name}/config</td></tr>
-    <tr><td>control scripts</td><td>/var/vcap/jobs/{package name}/bin</td></tr>
+    <tr><td>job configuration files</td><td>/var/vcap/jobs/{job name}/config</td></tr>
+    <tr><td>control scripts</td><td>/var/vcap/jobs/{job name}/bin</td></tr>
     <tr><td>pidfiles</td><td>/var/vcap/sys/run</td></tr>
-    <tr><td>log storage</td><td>/var/vcap/sys/log/{package name}</td></tr>
+    <tr><td>log storage</td><td>/var/vcap/sys/log/{process name}</td></tr>
     <tr><td>persistent data storage</td><td>/var/vcap/store</td></tr>
 </table>
 
