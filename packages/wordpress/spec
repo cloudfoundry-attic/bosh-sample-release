@@ -2,4 +2,4 @@
 name: wordpress
 
 files:
-  - wordpress/wordpress-3.3.1.tgz
+  - wordpress/wordpress-3.5.2.tgz
