@@ -83,9 +83,11 @@ packages
 
 Once you have enumerated your jobs and pacakges, the next step is to start building packages.
 
-#### generate the package skeleton
+#### generate the package skeletons
 
-First, run the BOSH command to create the package skeleton:
+First, run the BOSH command to create the package skeletons
+
+e.g. apache2
 
     $ cd bosh-sample-release
     $ bosh generate package apache2
@@ -96,7 +98,11 @@ First, run the BOSH command to create the package skeleton:
 
     Generated skeleton for `apache2' package in `packages/apache2'
 
-#### define the package spec
+Then all other packages
+
+    $ echo common debian_nfs_server mysql nginx php5 wordpress | xargs -n1 bosh generate package
+
+#### define the package specs
 
 The spec file is a yaml document that lists the names of the required source files and other packages which are compilation dependencies.
 
@@ -128,8 +134,9 @@ The spec file for PHP is a bit more interesting, as the apache and mysql package
 
 You'll notice that the location of the source in the package spec is a relative path.  This is because the file can either be a part of the repo (inside the src directory) or stored in the blobstore (synched to blobs directory).  In the case of our sample release we're storing source in the repo:
 
+    $ mkdir src/apache2
     $ cd src/apache2
-    $ wget 'http://apache.tradebit.com/pub//httpd/httpd-2.2.25.tar.gz'
+    $ wget 'http://apache.tradebit.com/pub/httpd/httpd-2.2.25.tar.gz'
 
     Resolving apache.tradebit.com... 71.6.202.162
     Connecting to apache.tradebit.com|71.6.202.162|:80... connected.
@@ -149,28 +156,30 @@ For example, our apache packaging script is a perfect example of a simple config
 
 **packages/apache2/packaging**
 
+    cat <<"EOF" >packages/apache2/packaging
     echo "Extracting apache https..."
     tar xzf apache2/httpd-2.2.25.tar.gz
 
     echo "Building apache https..."
     (
-      cd httpd-2.2.25
-      ./configure \
+        cd httpd-2.2.25
+        ./configure \
         --prefix=${BOSH_INSTALL_TARGET} \
         --enable-so
-      make
-      make install
-    )  
+        make
+        make install
+    )
+    EOF
 
 Due to the compile time dependencies PHP is more complicated:
 
-**packages/php4/packaging**
+**packages/php5/packaging**
 
+    cat <<"EOF" >packages/php5/packaging
     echo "Extracting php5..."
     tar xjf php5/php-5.3.27.tar.bz2
 
->the PHP configure script needs the location of the apache and mysql packages
-
+    # ./configure needs the location of the apache and mysql packages
     export APACHE2=/var/vcap/packages/apache2
 
     echo "Building php5..."
@@ -180,23 +189,27 @@ Due to the compile time dependencies PHP is more complicated:
       --with-apxs2=${APACHE2}/bin/apxs \
       --with-config-file-path=/var/vcap/jobs/wordpress/config/php.ini \
       --with-mysql=/var/vcap/packages/mysqlclient
+    EOF
 
 >stdout from make is redirected to /dev/null because the output is too large for the [nats message bus](http://docs.cloudfoundry.com/docs/running/bosh/components/messaging.html)
 
+    cat <<EOF >>packages/php5/packaging
     make > /dev/null
     make install > /dev/null
+    EOF
 
 >finally, make installs into the apache module directory, we have to manually copy it back into BOSH\_INSTALL\_TARGET otherwise it will be left behind on the compilation vm
 
+    cat <<"EOF" >>packages/php5/packaging
     mkdir -p ${BOSH_INSTALL_TARGET}/modules
     cp ${APACHE2}/modules/libphp5.so ${BOSH_INSTALL_TARGET}/modules
-
+    EOF
 
 ### <a id="job"></a>creating a job
 
 Now that all of the packages have been created we can start assembling [jobs](http://docs.cloudfoundry.com/docs/running/bosh/reference/jobs.html).
 
-#### generate the package skeleton
+#### generate the job skeleton
 
 First, run the BOSH command to create the job skeleton:
 
@@ -221,6 +234,7 @@ The nginx job has a fairly straightforward spec:
 
 **jobs/nginx/spec**
 
+    cat <<"EOF" >jobs/nginx/spec
     ---
     name: nginx
 
@@ -243,6 +257,7 @@ The nginx job has a fairly straightforward spec:
         default: 8008
       wordpress.servers:
         description: Array of upstream (backends) servers
+    EOF
 
 #### add packages to job spec
 
@@ -250,31 +265,36 @@ The first step toward creating a deployable job is defining the package dependen
 
 **jobs/wordpress/spec**
 
+    cat <<"EOF" >jobs/wordpress/spec
     ---
     name: wordpress
-
-    packages:
+      
+    packages:      
       - mysqlclient
       - apache2
       - php5
-      - wordpress
+      - wordpress      
+    EOF
 
 #### create a stub monit config
 
 BOSH uses [monit](http://mmonit.com/monit/) to manage the lifecycle of job processes.  At a bare minimum the monit config file inside the job directory needs to define a pidfile and how to start/stop the job.  It's going to be a lot easier to build out the rest of our job after we've got a vm deployed with  packages installed, so we're going to create a stub monit config:
 
 **jobs/wordpress/monit**
-
+    
+    cat <<"EOF" >jobs/wordpress/monit
     check process wordpress
       with pidfile /var/run/stub.pid
       start program "/bin/cp /var/run/monit.pid /var/run/stub.pid" with timeout 60 seconds
       stop program "/bin/rm -f /var/run/stub.pid" with timeout 60 seconds
       group vcap
+    EOF
 
 and update our spec:
 
 **jobs/wordpress/spec**
 
+      cat <<"EOF" >jobs/wordpress/spec
       ---
       name: wordpress
 
@@ -285,6 +305,7 @@ and update our spec:
         - apache2
         - php5
         - wordpress
+      EOF
 
 This will allow us to define a 'wordpress' job in our deployment manifest and deploy a vm with our packages.
 
@@ -296,15 +317,14 @@ It generally easier to create templates on an existing BOSH instance that has th
 
 **BOSH filesystem conventions**
 
-<table width="100%">
-    <tr><th align="left" width="30%">object</th><th align="left" width="70%">path</th></tr>
-    <tr><td>package contents</td><td>/var/vcap/package/{package name}</td></tr>
-    <tr><td>job configuration files</td><td>/var/vcap/jobs/{job name}/config</td></tr>
-    <tr><td>control scripts</td><td>/var/vcap/jobs/{job name}/bin</td></tr>
-    <tr><td>pidfiles</td><td>/var/vcap/sys/run</td></tr>
-    <tr><td>log storage</td><td>/var/vcap/sys/log/{process name}</td></tr>
-    <tr><td>persistent data storage</td><td>/var/vcap/store</td></tr>
-</table>
+| object                  | path                             |
+| ----------------------- | ---------------------------------|
+| package contents        | /var/vcap/package/{package name} |
+| job configuration files | /var/vcap/jobs/{job name}/config |
+| control scripts         | /var/vcap/jobs/{job name}/bin    |
+| pidfiles                | /var/vcap/sys/run                |
+| log storage             | /var/vcap/sys/log/{process name} |
+| persistent data storage | /var/vcap/store                  |
 
 For example, in the wordpress job the apache configuration needs to set the document root to point at our wordpress package:
 
@@ -319,6 +339,7 @@ Once the configuration file is completed it can be copied into the templates dir
 
 **jobs/wordpress/spec**
 
+      cat <<"EOF" >jobs/wordpress/spec
       ---
       name: wordpress
 
@@ -330,6 +351,7 @@ Once the configuration file is completed it can be copied into the templates dir
         - apache2
         - php5
         - wordpress
+      EOF
 
 Once all of the necessary configuration files are in place you must write a control script that monit can use to start/stop the process and replace the stub monit config.
 
@@ -343,6 +365,7 @@ To reference a job property in a ERB template, use the "p" helper, e.g.:
 
 **jobs/wordpress/templates/wp-config.php.erb**
 
+    cat <<"EOF" >jobs/wordpress/templates/wp-config.php.erb
     define('AUTH_KEY',         '<%= p("wordpress.auth_key") %>');
     define('SECURE_AUTH_KEY',  '<%= p("wordpress.secure_auth_key") %>');
     define('LOGGED_IN_KEY',    '<%= p("wordpress.logged_in_key") %>');
@@ -351,12 +374,13 @@ To reference a job property in a ERB template, use the "p" helper, e.g.:
     define('SECURE_AUTH_SALT', '<%= p("wordpress.secure_auth_salt") %>');
     define('LOGGED_IN_SALT',   '<%= p("wordpress.logged_in_salt") %>');
     define('NONCE_SALT',       '<%= p("wordpress.nonce_salt") %>');
-
+    EOF
 
 All job properties should be defined in your job spec, along with a description and an optional default value.
 
 **jobs/wordpress/spec**
-
+    
+    cat <<"EOF" >>jobs/wordpress/spec
     properties:
       wordpress.auth_key:
         description: Wordpress Authentication Unique Keys (AUTH_KEY)
@@ -374,7 +398,7 @@ All job properties should be defined in your job spec, along with a description 
         description: Wordpress Authentication Unique Salts (LOGGED_IN_SALT)
       wordpress.nonce_salt:
         description: Wordpress Authentication Unique Salts (NONCE_SALT)
-
+    EOF
 
 ### <a id="deploy"></a>Deploy
 
@@ -387,7 +411,10 @@ To deploy the sample application edit the example deployment manifest (located a
 
 #### TODO
 
-Use [HyperDB](http://wordpress.org/extend/plugins/hyperdb/installation/) & [MySQL master/slave replication](http://dev.mysql.com/doc/refman/5.1/en/replication-howto.html)
-
-
-
+* Run through this readme and commit updated code to this repo
+* Fill in all missing jobs specs etc. so this README is a complete set of steps to recreate this release from scratch
+* When committing update code, recreate git history to match each step in the README?
+* Another example bosh-release-simple: Use Redis
+* Rename this example bosh-release-intermediate: Rename this release?
+* bosh-release-advanced: Use [HyperDB](http://wordpress.org/extend/plugins/hyperdb/installation/) & [MySQL master/slave replication](http://dev.mysql.com/doc/refman/5.1/en/replication-howto.html)
+* tmux screencast of this README?
