@@ -1,0 +1,99 @@
+name: wordpress-warden
+director_uuid: 365eb26d-146e-4d12-888f-d9249dbef375
+
+releases:
+- name: wordpress
+  version: latest
+
+compilation:
+  workers: 2
+  network: wordpress-network
+  reuse_compilation_vms: true
+  cloud_properties:
+    name: random
+
+update:
+  canaries: 1
+  canary_watch_time: 30000-240000
+  update_watch_time: 30000-600000
+  max_in_flight: 3
+
+resource_pools:
+- name: common-resource-pool
+  network: wordpress-network
+  size: 3
+  stemcell:
+    name: bosh-stemcell
+    version: latest
+  cloud_properties:
+    name: random
+
+networks:
+- name: wordpress-network
+  subnets:
+  - range: 10.244.1.0/24
+    reserverd: 
+      - 10.244.1.0
+      - 10.244.1.255
+      - 10.244.1.1
+    static:
+      - 10.244.1.2
+      - 10.244.1.14
+      - 10.244.1.6
+
+    cloud_properties:
+      name: random
+
+jobs:
+- name: mysql
+  template: mysql
+  instances: 1
+  resource_pool: common-resource-pool
+  persistent_disk: 10240
+  networks:
+    - name: wordpress-network
+      static_ips:
+        - 10.244.1.2 
+
+- name: wordpress
+  template: wordpress
+  instances: 1
+  resource_pool: common-resource-pool
+  networks:
+    - name: wordpress-network
+      static_ips:
+        - 10.244.1.14
+
+- name: nginx
+  template: nginx
+  instances: 1
+  resource_pool: common-resource-pool
+  networks:
+    - name: wordpress-network
+      static_ips:
+        - 10.244.1.6
+
+properties:
+  env:
+
+  mysql:
+    address:  10.244.1.2
+    password: rootpass
+
+  wordpress:
+    admin: foo@bar.com
+    servers:
+      - 10.244.1.14
+    servername: 10.244.1.6
+    db:
+      name: wp
+      user: wordpress
+      pass: w0rdpr3ss
+    auth_key: random key
+    secure_auth_key: random key
+    logged_in_key: random key
+    nonce_key: random key
+    auth_salt: random key
+    secure_auth_salt: random key
+    logged_in_salt: random key
+    nonce_salt: random key
